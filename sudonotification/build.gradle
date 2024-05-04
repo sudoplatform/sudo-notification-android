@@ -257,12 +257,11 @@ ext {
     }
 }
 
-// Internal (and External) publishing
-//if(project.findProperty("tag") &&
-//        project.file("${rootProject.projectDir}/util/publish-mavencentral.gradle").exists()) {
-//    apply from: "${rootProject.projectDir}/util/publish-mavencentral.gradle"
-//}
-//else
-if (project.file("${rootProject.projectDir}/util/publish-internal-android.gradle").exists()) {
+// Internal and External publishing
+if(project.findProperty("tag") &&
+        project.file("${rootProject.projectDir}/util/publish-mavencentral.gradle").exists()) {
+    apply from: "${rootProject.projectDir}/util/publish-mavencentral.gradle"
+}
+else if (project.file("${rootProject.projectDir}/util/publish-internal-android.gradle").exists()) {
     apply from: "${rootProject.projectDir}/util/publish-internal-android.gradle"
 }
