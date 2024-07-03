@@ -58,6 +58,7 @@ $dokka.location:com.sudoplatform.sudonotification/DefaultSudoNotificationClient/
 $dokka.location:com.sudoplatform.sudonotification/DefaultSudoNotificationClient/reset/#/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-default-sudo-notification-client/reset.html
 $dokka.location:com.sudoplatform.sudonotification/DefaultSudoNotificationClient/setNotificationConfiguration/#com.sudoplatform.sudonotification.types.NotificationSettingsInput/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-default-sudo-notification-client/set-notification-configuration.html
 $dokka.location:com.sudoplatform.sudonotification/DefaultSudoNotificationClient/updateNotificationRegistration/#com.sudoplatform.sudonotification.NotificationDeviceInputProvider/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-default-sudo-notification-client/update-notification-registration.html
+$dokka.location:com.sudoplatform.sudonotification/DefaultSudoNotificationClient/version/#/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-default-sudo-notification-client/version.html
 $dokka.location:com.sudoplatform.sudonotification/NotificationDeviceInputProvider///PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-notification-device-input-provider/index.html
 $dokka.location:com.sudoplatform.sudonotification/NotificationDeviceInputProvider/appName/#/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-notification-device-input-provider/app-name.html
 $dokka.location:com.sudoplatform.sudonotification/NotificationDeviceInputProvider/appVersion/#/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-notification-device-input-provider/app-version.html
@@ -110,6 +111,7 @@ $dokka.location:com.sudoplatform.sudonotification/SudoNotificationClient/registe
 $dokka.location:com.sudoplatform.sudonotification/SudoNotificationClient/reset/#/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-sudo-notification-client/reset.html
 $dokka.location:com.sudoplatform.sudonotification/SudoNotificationClient/setNotificationConfiguration/#com.sudoplatform.sudonotification.types.NotificationSettingsInput/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-sudo-notification-client/set-notification-configuration.html
 $dokka.location:com.sudoplatform.sudonotification/SudoNotificationClient/updateNotificationRegistration/#com.sudoplatform.sudonotification.NotificationDeviceInputProvider/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-sudo-notification-client/update-notification-registration.html
+$dokka.location:com.sudoplatform.sudonotification/SudoNotificationClient/version/#/PointingToDeclaration/sudonotification/com.sudoplatform.sudonotification/-sudo-notification-client/version.html
 com.sudoplatform.sudonotification
 com.sudoplatform.sudonotification.types
 

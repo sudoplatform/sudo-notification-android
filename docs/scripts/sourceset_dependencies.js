@@ -1,1 +1,1 @@
-sourceset_dependencies='{":sudonotification:dokkaHtml/androidTestRelease":[],":sudonotification:dokkaHtml/debug":[],":sudonotification:dokkaHtml/main":[],":sudonotification:dokkaHtml/release":[],":sudonotification:dokkaHtml/testFixtures":[],":sudonotification:dokkaHtml/testFixturesDebug":[],":sudonotification:dokkaHtml/testFixturesRelease":[]}'
+sourceset_dependencies='{":sudonotification:dokkaHtml/debug":[],":sudonotification:dokkaHtml/main":[],":sudonotification:dokkaHtml/release":[]}'

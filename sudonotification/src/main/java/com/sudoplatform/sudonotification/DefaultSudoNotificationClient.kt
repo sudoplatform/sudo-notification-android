@@ -128,6 +128,8 @@ class DefaultSudoNotificationClient(
         private const val ERROR_INVALID_ARGUMENT = "sudoplatform.InvalidArgumentError"
     }
 
+    override val version: String = "3.0.0"
+
     private val appSyncClient: AWSAppSyncClient =
         appSyncClient ?: ApiClientManager.getClient(
             context,
