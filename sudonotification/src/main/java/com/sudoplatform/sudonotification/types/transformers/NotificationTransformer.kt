@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -21,15 +21,17 @@ internal object NotificationTransformer {
     fun toEntityFromGetNotificationSettingsQueryResult(
         result: GetNotificationSettingsQuery.GetNotificationSettings,
     ): NotificationConfiguration {
-        val configs: List<NotificationFilterItem> = result.filter().map {
-            NotificationFilterItem(
-                UUID.randomUUID(),
-                name = it.serviceName(),
-                status = it.actionType().toString().uppercase(),
-                rules = it.rule(),
-                meta = it.enableMeta(),
-            )
-        }
+        val configs: List<NotificationFilterItem> = result.filter
+            .filterNotNull()
+            .map {
+                NotificationFilterItem(
+                    UUID.randomUUID(),
+                    name = it.serviceName,
+                    status = it.actionType.toString().uppercase(),
+                    rules = it.rule,
+                    meta = it.enableMeta,
+                )
+            }
         return NotificationConfiguration(configs = configs)
     }
 }

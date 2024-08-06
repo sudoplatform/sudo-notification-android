@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,7 +7,6 @@
 package com.sudoplatform.sudonotification
 
 import android.content.Context
-import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient
 import com.google.firebase.messaging.RemoteMessage
 import com.sudoplatform.sudoapiclient.ApiClientManager
 import com.sudoplatform.sudologging.AndroidUtilsLogDriver
@@ -18,6 +17,7 @@ import com.sudoplatform.sudonotification.types.NotifiableClient
 import com.sudoplatform.sudonotification.types.NotificationConfiguration
 import com.sudoplatform.sudonotification.types.NotificationSettingsInput
 import com.sudoplatform.sudouser.SudoUserClient
+import com.sudoplatform.sudouser.amplify.GraphQLClient
 import java.util.Objects
 
 /**
@@ -39,7 +39,7 @@ interface SudoNotificationClient {
     class Builder internal constructor() {
         private var context: Context? = null
         private var sudoUserClient: SudoUserClient? = null
-        private var appSyncClient: AWSAppSyncClient? = null
+        private var graphQLClient: GraphQLClient? = null
         private var logger: Logger =
             Logger(LogConstants.SUDOLOG_TAG, AndroidUtilsLogDriver(LogLevel.INFO))
         private var notifiableServices: List<NotifiableClient>? = emptyList()
@@ -67,12 +67,12 @@ interface SudoNotificationClient {
         }
 
         /**
-         * Provide an [AWSAppSyncClient] for the [SudoNotificationClient] to use
-         * (optional input). If this is not supplied, an [AWSAppSyncClient] will
+         * Provide an [GraphQLClient] for the [SudoNotificationClient] to use
+         * (optional input). If this is not supplied, an [GraphQLClient] will
          * be constructed and used.
          */
-        fun setAppSyncClient(appSyncClient: AWSAppSyncClient) = also {
-            this.appSyncClient = appSyncClient
+        fun setGraphQLClient(graphQLClient: GraphQLClient) = also {
+            this.graphQLClient = graphQLClient
         }
 
         /**
@@ -92,7 +92,7 @@ interface SudoNotificationClient {
             Objects.requireNonNull(context, "Context must be provided.")
             Objects.requireNonNull(sudoUserClient, "SudoUserClient must be provided.")
 
-            val appSyncClient = appSyncClient
+            val graphQLClient = graphQLClient
                 ?: ApiClientManager.getClient(
                     this@Builder.context!!,
                     this@Builder.sudoUserClient!!,
@@ -103,7 +103,7 @@ interface SudoNotificationClient {
                 context = context!!,
                 sudoUserClient = this@Builder.sudoUserClient!!,
                 notifiableServices = notifiableServices!!,
-                appSyncClient = appSyncClient,
+                graphQLClient = graphQLClient,
                 logger = logger,
             )
         }

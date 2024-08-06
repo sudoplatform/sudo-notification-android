@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -121,7 +121,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
         SudoNotificationClient.builder()
             .setContext(context)
             .setSudoUserClient(userClient)
-            .setAppSyncClient(appSyncClient)
+            .setGraphQLClient(appSyncClient)
             .setLogger(logger)
             .setNotifiableClients(listOf(sampleNotifiableClient))
             .build()

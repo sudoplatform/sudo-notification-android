@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,23 +8,22 @@ package com.sudoplatform.sudonotification
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient
-import com.amazonaws.mobileconnectors.appsync.fetcher.AppSyncResponseFetchers
 import com.amazonaws.services.cognitoidentity.model.NotAuthorizedException
-import com.apollographql.apollo.api.Error
-import com.apollographql.apollo.exception.ApolloException
+import com.amplifyframework.api.graphql.GraphQLResponse
+import com.apollographql.apollo3.api.Optional
 import com.google.firebase.messaging.RemoteMessage
 import com.sudoplatform.sudoapiclient.ApiClientManager
 import com.sudoplatform.sudoconfigmanager.DefaultSudoConfigManager
 import com.sudoplatform.sudologging.AndroidUtilsLogDriver
 import com.sudoplatform.sudologging.LogLevel
 import com.sudoplatform.sudologging.Logger
-import com.sudoplatform.sudonotification.appsync.enqueueFirst
 import com.sudoplatform.sudonotification.graphql.DeleteAppFromDeviceMutation
 import com.sudoplatform.sudonotification.graphql.GetNotificationSettingsQuery
 import com.sudoplatform.sudonotification.graphql.RegisterAppOnDeviceMutation
 import com.sudoplatform.sudonotification.graphql.UpdateDeviceInfoMutation
 import com.sudoplatform.sudonotification.graphql.UpdateNotificationSettingsMutation
+import com.sudoplatform.sudonotification.graphql.type.BuildType
+import com.sudoplatform.sudonotification.graphql.type.ClientEnvType
 import com.sudoplatform.sudonotification.graphql.type.DeleteAppFromDeviceInput
 import com.sudoplatform.sudonotification.graphql.type.Filter
 import com.sudoplatform.sudonotification.graphql.type.FilterAction
@@ -34,16 +33,18 @@ import com.sudoplatform.sudonotification.graphql.type.RegisterAppOnDeviceInput
 import com.sudoplatform.sudonotification.graphql.type.SchemaEntry
 import com.sudoplatform.sudonotification.graphql.type.UpdateInfoInput
 import com.sudoplatform.sudonotification.graphql.type.UpdateSettingsInput
-import com.sudoplatform.sudonotification.graphql.type.buildType
-import com.sudoplatform.sudonotification.graphql.type.clientEnvType
 import com.sudoplatform.sudonotification.logging.LogConstants
 import com.sudoplatform.sudonotification.types.NotifiableClient
 import com.sudoplatform.sudonotification.types.NotificationConfiguration
 import com.sudoplatform.sudonotification.types.NotificationSettingsInput
 import com.sudoplatform.sudonotification.types.transformers.NotificationTransformer
 import com.sudoplatform.sudouser.SudoUserClient
+import com.sudoplatform.sudouser.amplify.GraphQLClient
+import com.sudoplatform.sudouser.exceptions.GRAPHQL_ERROR_TYPE
+import com.sudoplatform.sudouser.exceptions.HTTP_STATUS_CODE_KEY
 import org.json.JSONObject
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.util.concurrent.CancellationException
 
 /**
@@ -51,14 +52,14 @@ import java.util.concurrent.CancellationException
  *
  * @property context [Context] Application context.
  * @property sudoUserClient [SudoUserClient] Instance required to issue authentication tokens
- * @property appSyncClient [AWSAppSyncClient] Optional AppSync client to use. Mainly used for unit testing.
+ * @property graphQLClient [GraphQLClient] Optional GraphQL client to use. Mainly used for unit testing.
  * @property logger [Logger] Errors and warnings will be logged here.
  */
 class DefaultSudoNotificationClient(
     private val context: Context,
     private val sudoUserClient: SudoUserClient,
     override val notifiableServices: List<NotifiableClient>,
-    appSyncClient: AWSAppSyncClient? = null,
+    graphQLClient: GraphQLClient? = null,
     private val logger: Logger = Logger(LogConstants.SUDOLOG_TAG, AndroidUtilsLogDriver(LogLevel.INFO)),
 ) : SudoNotificationClient {
 
@@ -116,8 +117,6 @@ class DefaultSudoNotificationClient(
         private const val PAYLOAD_ERROR_MSG = "notification payload error"
 
         /** Errors returned from the service */
-        private const val ERROR_TYPE = "errorType"
-
         private const val ERROR_SERVICE = "sudoplatform.ServiceError"
         private const val ERROR_ALREADY_REG = "sudoplatform.ns.DeviceExist"
         private const val ERROR_NOT_FOUND = "sudoplatform.ns.DeviceNotFound"
@@ -130,15 +129,14 @@ class DefaultSudoNotificationClient(
 
     override val version: String = "3.0.0"
 
-    private val appSyncClient: AWSAppSyncClient =
-        appSyncClient ?: ApiClientManager.getClient(
+    private val graphQLClient: GraphQLClient =
+        graphQLClient ?: ApiClientManager.getClient(
             context,
             this.sudoUserClient,
             "notificationService",
         )
 
     override suspend fun reset() {
-        appSyncClient.clearCaches()
     }
 
     override fun process(message: RemoteMessage) {
@@ -163,20 +161,18 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val inputDevice = GetSettingsInput.builder()
-                .bundleId(device.bundleIdentifier)
-                .deviceId(device.deviceIdentifier)
-                .build()
-            val query = GetNotificationSettingsQuery.builder().input(inputDevice).build()
-            val queryResponse = appSyncClient.query(query)
-                .responseFetcher(AppSyncResponseFetchers.NETWORK_ONLY)
-                .enqueueFirst()
+            val input = GetSettingsInput(bundleId = device.bundleIdentifier, deviceId = device.deviceIdentifier)
+
+            val queryResponse = this.graphQLClient.query<GetNotificationSettingsQuery, GetNotificationSettingsQuery.Data>(
+                GetNotificationSettingsQuery.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
 
             if (queryResponse.hasErrors()) {
-                logger.warning("errors = ${queryResponse.errors()}")
-                throw interpretNotificationError(queryResponse.errors().first())
+                logger.warning("errors = ${queryResponse.errors}")
+                throw interpretNotificationError(queryResponse.errors.first())
             }
-            val result = queryResponse.data()?.notificationSettings
+            val result = queryResponse.data?.getNotificationSettings
             return result?.let { NotificationTransformer.toEntityFromGetNotificationSettingsQueryResult(it) }!!
         } catch (e: Throwable) {
             logger.debug("unexpected getNotificationConfiguration error $e")
@@ -190,17 +186,15 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val delInput = DeleteAppFromDeviceInput.builder()
-                .bundleId(device.bundleIdentifier)
-                .deviceId(device.deviceIdentifier)
-                .build()
-            val mutation = DeleteAppFromDeviceMutation.builder().input(delInput).build()
-            val mutationResponse = appSyncClient.mutate(mutation)
-                .enqueueFirst()
+            val input = DeleteAppFromDeviceInput(bundleId = device.bundleIdentifier, deviceId = device.deviceIdentifier)
+            val mutationResponse = this.graphQLClient.mutate<DeleteAppFromDeviceMutation, DeleteAppFromDeviceMutation.Data>(
+                DeleteAppFromDeviceMutation.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
 
             if (mutationResponse.hasErrors()) {
-                logger.warning("errors = ${mutationResponse.errors()}")
-                throw interpretNotificationError(mutationResponse.errors().first())
+                logger.warning("errors = ${mutationResponse.errors}")
+                throw interpretNotificationError(mutationResponse.errors.first())
             }
         } catch (e: Throwable) {
             logger.debug("unexpected deRegisterNotification error $e")
@@ -214,22 +208,23 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val inputDevice = RegisterAppOnDeviceInput.builder()
-                .deviceId(device.deviceIdentifier)
-                .clientEnv(clientEnvType.valueOf(device.clientEnv.uppercase()))
-                .bundleId(device.bundleIdentifier)
-                .build(buildType.valueOf(device.buildType.uppercase()))
-                .locale(device.locale)
-                .version(device.appVersion)
-                .standardToken(device.pushToken)
-                .build()
-            val mutation = RegisterAppOnDeviceMutation.builder().input(inputDevice).build()
-            val mutationResponse = appSyncClient.mutate(mutation)
-                .enqueueFirst()
+            val input = RegisterAppOnDeviceInput(
+                deviceId = device.deviceIdentifier,
+                clientEnv = ClientEnvType.valueOf(device.clientEnv.uppercase()),
+                bundleId = device.bundleIdentifier,
+                build = Optional.presentIfNotNull(BuildType.valueOf(device.buildType.uppercase())),
+                locale = Optional.presentIfNotNull(device.locale),
+                version = Optional.presentIfNotNull(device.appVersion),
+                standardToken = Optional.presentIfNotNull(device.pushToken),
+            )
+            val mutationResponse = this.graphQLClient.mutate<RegisterAppOnDeviceMutation, RegisterAppOnDeviceMutation.Data>(
+                RegisterAppOnDeviceMutation.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
 
             if (mutationResponse.hasErrors()) {
-                logger.warning("errors = ${mutationResponse.errors()}")
-                throw interpretNotificationError(mutationResponse.errors().first())
+                logger.warning("errors = ${mutationResponse.errors}")
+                throw interpretNotificationError(mutationResponse.errors.first())
             }
         } catch (e: Throwable) {
             logger.debug("unexpected registerNotification error $e")
@@ -246,38 +241,42 @@ class DefaultSudoNotificationClient(
 
         try {
             val filters = config.filter.map {
-                Filter.builder()
-                    .actionType(FilterAction.valueOf(it.status!!))
-                    .enableMeta(it.meta!!)
-                    .serviceName(it.name)
-                    .rule(it.rules!!)
-                    .build()
+                Filter(
+                    serviceName = it.name,
+                    actionType = FilterAction.valueOf(it.status!!),
+                    rule = it.rules!!,
+                    enableMeta = Optional.presentIfNotNull(it.meta!!),
+                )
             }
             val services = config.services.map { service ->
-                NotifiableServiceSchema.builder()
-                    .serviceName(service.serviceName)
-                    .schema(
+                NotifiableServiceSchema(
+                    serviceName = service.serviceName,
+                    schema = Optional.presentIfNotNull(
                         service.schema.map { schema ->
-                            SchemaEntry.builder().description(schema.description)
-                                .type(schema.type).fieldName(schema.fieldName).build()
+                            SchemaEntry(
+                                description = schema.description,
+                                type = schema.type,
+                                fieldName = schema.fieldName,
+                            )
                         },
-                    )
-                    .build()
+                    ),
+                )
             }
-            val settingsInput = UpdateSettingsInput
-                .builder()
-                .bundleId(config.bundleId)
-                .deviceId(config.deviceId)
-                .services(services)
-                .filter(filters)
-                .build()
-            val mutation = UpdateNotificationSettingsMutation.builder().input(settingsInput).build()
-            val mutationResponse = appSyncClient.mutate(mutation)
-                .enqueueFirst()
+
+            val input = UpdateSettingsInput(
+                deviceId = config.bundleId,
+                bundleId = config.deviceId,
+                services = services,
+                filter = filters,
+            )
+            val mutationResponse = this.graphQLClient.mutate<UpdateNotificationSettingsMutation, UpdateNotificationSettingsMutation.Data>(
+                UpdateNotificationSettingsMutation.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
 
             if (mutationResponse.hasErrors()) {
-                logger.warning("errors = ${mutationResponse.errors()}")
-                throw interpretNotificationError(mutationResponse.errors().first())
+                logger.warning("errors = ${mutationResponse.errors}")
+                throw interpretNotificationError(mutationResponse.errors.first())
             }
             return NotificationConfiguration(configs = config.filter)
         } catch (e: Throwable) {
@@ -292,21 +291,22 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val inputDevice = UpdateInfoInput.builder()
-                .bundleId(device.bundleIdentifier)
-                .deviceId(device.deviceIdentifier)
-                .build(buildType.valueOf(device.buildType.uppercase()))
-                .locale(device.locale)
-                .version(device.appVersion)
-                .standardToken(device.pushToken)
-                .build()
-            val mutation = UpdateDeviceInfoMutation.builder().input(inputDevice).build()
-            val mutationResponse = appSyncClient.mutate(mutation)
-                .enqueueFirst()
+            val input = UpdateInfoInput(
+                bundleId = device.bundleIdentifier,
+                deviceId = device.deviceIdentifier,
+                build = Optional.presentIfNotNull(BuildType.valueOf(device.buildType.uppercase())),
+                locale = Optional.presentIfNotNull(device.locale),
+                version = Optional.presentIfNotNull(device.appVersion),
+                standardToken = Optional.presentIfNotNull(device.pushToken),
+            )
+            val mutationResponse = this.graphQLClient.mutate<UpdateDeviceInfoMutation, UpdateDeviceInfoMutation.Data>(
+                UpdateDeviceInfoMutation.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
 
             if (mutationResponse.hasErrors()) {
-                logger.warning("errors = ${mutationResponse.errors()}")
-                throw interpretNotificationError(mutationResponse.errors().first())
+                logger.warning("errors = ${mutationResponse.errors}")
+                throw interpretNotificationError(mutationResponse.errors.first())
             }
         } catch (e: Throwable) {
             logger.debug("unexpected registerNotification error $e")
@@ -314,8 +314,14 @@ class DefaultSudoNotificationClient(
         }
     }
 
-    private fun interpretNotificationError(e: Error): SudoNotificationClient.NotificationException {
-        val error = e.customAttributes()[ERROR_TYPE]?.toString() ?: ""
+    private fun interpretNotificationError(e: GraphQLResponse.Error): SudoNotificationClient.NotificationException {
+        val httpStatusCode = e.extensions?.get(HTTP_STATUS_CODE_KEY) as Int?
+        val error = e.extensions?.get(GRAPHQL_ERROR_TYPE) as String? ?: "Missing error type"
+        if (httpStatusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            return SudoNotificationClient.NotificationException.NotAuthorizedException(e.message)
+        } else if (httpStatusCode != null && httpStatusCode >= HttpURLConnection.HTTP_INTERNAL_ERROR) {
+            return SudoNotificationClient.NotificationException.RequestFailedException(e.message)
+        }
         if (error.contains(ERROR_SERVICE)) {
             return SudoNotificationClient.NotificationException.ServiceException(SERVICE_ERROR_MSG)
         }
@@ -353,10 +359,7 @@ class DefaultSudoNotificationClient(
 
 @VisibleForTesting
 fun recognizeError(e: Throwable): Throwable {
-    return recognizeRootCause(e) ?: when (e) {
-        is ApolloException -> SudoNotificationClient.NotificationException.RequestFailedException(cause = e)
-        else -> SudoNotificationClient.NotificationException.UnknownException(e)
-    }
+    return recognizeRootCause(e) ?: SudoNotificationClient.NotificationException.UnknownException(e)
 }
 
 private fun recognizeRootCause(e: Throwable?): Throwable? {
@@ -368,10 +371,9 @@ private fun recognizeRootCause(e: Throwable?): Throwable? {
     return when (e) {
         is SudoNotificationClient.NotificationException -> e
         is NotAuthorizedException -> SudoNotificationClient.NotificationException.NotAuthorizedException(cause = e)
-        is ApolloException -> recognizeRootCause(e.cause)
         is CancellationException -> e
-        is IOException -> recognizeRootCause(e.cause)
-        is RuntimeException -> recognizeRootCause(e.cause)
+        is IOException -> SudoNotificationClient.NotificationException.UnknownException(cause = e)
+        is RuntimeException -> SudoNotificationClient.NotificationException.UnknownException(cause = e)
         else -> null
     }
 }
