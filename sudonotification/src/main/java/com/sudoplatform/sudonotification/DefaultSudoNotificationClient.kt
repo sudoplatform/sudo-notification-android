@@ -264,8 +264,8 @@ class DefaultSudoNotificationClient(
             }
 
             val input = UpdateSettingsInput(
-                deviceId = config.bundleId,
-                bundleId = config.deviceId,
+                deviceId = config.deviceId,
+                bundleId = config.bundleId,
                 services = services,
                 filter = filters,
             )
