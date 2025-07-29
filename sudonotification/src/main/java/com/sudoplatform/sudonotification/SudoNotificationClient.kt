@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,6 +16,8 @@ import com.sudoplatform.sudonotification.logging.LogConstants
 import com.sudoplatform.sudonotification.types.NotifiableClient
 import com.sudoplatform.sudonotification.types.NotificationConfiguration
 import com.sudoplatform.sudonotification.types.NotificationSettingsInput
+import com.sudoplatform.sudonotification.types.UserAndDeviceNotificationConfiguration
+import com.sudoplatform.sudonotification.types.UserNotificationSettingsInput
 import com.sudoplatform.sudouser.SudoUserClient
 import com.sudoplatform.sudouser.amplify.GraphQLClient
 import java.util.Objects
@@ -152,43 +154,61 @@ interface SudoNotificationClient {
             NotificationException(cause = cause)
     }
 
-    /*
+    /**
      * Clear all local cache data
      */
     @Throws
     suspend fun reset()
 
-    /*
+    /**
      * Process the remote notification and dispatch to the corresponding client
      */
     @Throws
     fun process(message: RemoteMessage): Unit
 
-    /*
+    /**
      * Get current notification configuration on this device
      */
     @Throws(SudoNotificationClient.NotificationException::class)
     suspend fun getNotificationConfiguration(device: NotificationDeviceInputProvider): NotificationConfiguration
 
-    /*
-     * DeRgister for push notification for the user on this device
+    /**
+     * Get current user level notification configuration.
+     */
+    @Throws(SudoNotificationClient.NotificationException::class)
+    suspend fun getUserNotificationConfiguration(): NotificationConfiguration?
+
+    /**
+     * Get current user and device level notification configuration.
+     */
+    @Throws(SudoNotificationClient.NotificationException::class)
+    suspend fun getUserAndDeviceNotificationConfiguration(device: NotificationDeviceInputProvider): UserAndDeviceNotificationConfiguration
+
+    /**
+     * Deregister for push notifications for the user on this device
      */
     @Throws(SudoNotificationClient.NotificationException::class)
     suspend fun deRegisterNotification(device: NotificationDeviceInputProvider): Unit
 
-    /*
+    /**
      * Register for push notification for the user on this device
      */
     @Throws(SudoNotificationClient.NotificationException::class)
     suspend fun registerNotification(device: NotificationDeviceInputProvider): Unit
 
-    /*
-     * Set the notification configuration for the user.
+    /**
+     * Set the notification configuration for the device.
      */
     @Throws(SudoNotificationClient.NotificationException::class)
     suspend fun setNotificationConfiguration(config: NotificationSettingsInput): NotificationConfiguration
 
-    /*
+    /**
+     * Set the notification configuration for the user.
+     */
+    @Throws(SudoNotificationClient.NotificationException::class)
+    suspend fun setUserNotificationConfiguration(config: UserNotificationSettingsInput): NotificationConfiguration
+
+    /**
      * Update push notification registration for the user on this device
      */
     @Throws(SudoNotificationClient.NotificationException::class)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -63,6 +63,11 @@ data class NotificationConfiguration(
 data class NotificationSettingsInput(
     val bundleId: String,
     val deviceId: String,
+    val filter: List<NotificationFilterItem>,
+    val services: List<NotificationMetaData>,
+)
+
+data class UserNotificationSettingsInput(
     val filter: List<NotificationFilterItem>,
     val services: List<NotificationMetaData>,
 )

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,11 +18,11 @@ class DefaultNotificationDeviceInputProvider(
     override val deviceIdentifier: String,
     override val pushToken: String,
 ) : NotificationDeviceInputProvider {
-    override lateinit var appVersion: String
-    override lateinit var appName: String
-    override lateinit var bundleIdentifier: String
-    override lateinit var buildType: String
-    override lateinit var locale: String
+    override var appVersion: String
+    override var appName: String
+    override var bundleIdentifier: String
+    override var buildType: String
+    override var locale: String
 
     init {
         val pInfo: PackageInfo = context.packageManager.getPackageInfo(

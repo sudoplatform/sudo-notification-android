@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -19,6 +19,7 @@ import com.sudoplatform.sudologging.LogLevel
 import com.sudoplatform.sudologging.Logger
 import com.sudoplatform.sudonotification.graphql.DeleteAppFromDeviceMutation
 import com.sudoplatform.sudonotification.graphql.GetNotificationSettingsQuery
+import com.sudoplatform.sudonotification.graphql.GetUserAndDeviceNotificationSettingsQuery
 import com.sudoplatform.sudonotification.graphql.RegisterAppOnDeviceMutation
 import com.sudoplatform.sudonotification.graphql.UpdateDeviceInfoMutation
 import com.sudoplatform.sudonotification.graphql.UpdateNotificationSettingsMutation
@@ -28,6 +29,7 @@ import com.sudoplatform.sudonotification.graphql.type.DeleteAppFromDeviceInput
 import com.sudoplatform.sudonotification.graphql.type.Filter
 import com.sudoplatform.sudonotification.graphql.type.FilterAction
 import com.sudoplatform.sudonotification.graphql.type.GetSettingsInput
+import com.sudoplatform.sudonotification.graphql.type.GetUserAndDeviceSettingsInput
 import com.sudoplatform.sudonotification.graphql.type.NotifiableServiceSchema
 import com.sudoplatform.sudonotification.graphql.type.RegisterAppOnDeviceInput
 import com.sudoplatform.sudonotification.graphql.type.SchemaEntry
@@ -36,7 +38,11 @@ import com.sudoplatform.sudonotification.graphql.type.UpdateSettingsInput
 import com.sudoplatform.sudonotification.logging.LogConstants
 import com.sudoplatform.sudonotification.types.NotifiableClient
 import com.sudoplatform.sudonotification.types.NotificationConfiguration
+import com.sudoplatform.sudonotification.types.NotificationFilterItem
+import com.sudoplatform.sudonotification.types.NotificationMetaData
 import com.sudoplatform.sudonotification.types.NotificationSettingsInput
+import com.sudoplatform.sudonotification.types.UserAndDeviceNotificationConfiguration
+import com.sudoplatform.sudonotification.types.UserNotificationSettingsInput
 import com.sudoplatform.sudonotification.types.transformers.NotificationTransformer
 import com.sudoplatform.sudouser.SudoUserClient
 import com.sudoplatform.sudouser.amplify.GraphQLClient
@@ -108,22 +114,26 @@ class DefaultSudoNotificationClient(
 
         /** Exception messages */
         private const val SERVICE_ERROR_MSG = "Service error"
-        private const val ALREADY_REG_ERROR_MSG = "Device already registered"
-        private const val NOT_FOUND_ERROR_MSG = "Device not found"
-        private const val DELETE_ERROR_MSG = "Device deletion error"
-        private const val UPDATE_ERROR_MSG = "Device update error"
-        private const val READ_ERROR_MSG = "Device read error"
-        private const val CREATE_ERROR_MSG = "Device create error"
+        private const val DEVICE_ALREADY_REG_ERROR_MSG = "Device already registered"
+        private const val DEVICE_NOT_FOUND_ERROR_MSG = "Device not found"
+        private const val DEVICE_DELETE_ERROR_MSG = "Device deletion error"
+        private const val DEVICE_UPDATE_ERROR_MSG = "Device update error"
+        private const val DEVICE_READ_ERROR_MSG = "Device read error"
+        private const val DEVICE_CREATE_ERROR_MSG = "Device create error"
+        private const val USERINFO_UPDATE_ERROR_MSG = "User info update error"
+        private const val USERINFO_READ_ERROR_MSG = "User info read error"
         private const val PAYLOAD_ERROR_MSG = "notification payload error"
 
         /** Errors returned from the service */
         private const val ERROR_SERVICE = "sudoplatform.ServiceError"
-        private const val ERROR_ALREADY_REG = "sudoplatform.ns.DeviceExist"
-        private const val ERROR_NOT_FOUND = "sudoplatform.ns.DeviceNotFound"
-        private const val ERROR_DELETE = "sudoplatform.ns.DeviceDelete"
-        private const val ERROR_UPDATE = "sudoplatform.ns.DeviceUpdate"
-        private const val ERROR_READ = "sudoplatform.ns.DeviceRead"
-        private const val ERROR_CREATE = "sudoplatform.ns.DeviceCreate"
+        private const val ERROR_DEVICE_ALREADY_REG = "sudoplatform.ns.DeviceExist"
+        private const val ERROR_DEVICE_NOT_FOUND = "sudoplatform.ns.DeviceNotFound"
+        private const val ERROR_DEVICE_DELETE = "sudoplatform.ns.DeviceDelete"
+        private const val ERROR_DEVICE_UPDATE = "sudoplatform.ns.DeviceUpdate"
+        private const val ERROR_DEVICE_READ = "sudoplatform.ns.DeviceRead"
+        private const val ERROR_DEVICE_CREATE = "sudoplatform.ns.DeviceCreate"
+        private const val ERROR_USERINFO_UPDATE = "sudoplatform.ns.UserInfoUpdate"
+        private const val ERROR_USERINFO_READ = "sudoplatform.ns.UserInfoRead"
         private const val ERROR_INVALID_ARGUMENT = "sudoplatform.InvalidArgumentError"
     }
 
@@ -173,9 +183,69 @@ class DefaultSudoNotificationClient(
                 throw interpretNotificationError(queryResponse.errors.first())
             }
             val result = queryResponse.data?.getNotificationSettings
-            return result?.let { NotificationTransformer.toEntityFromGetNotificationSettingsQueryResult(it) }!!
+            return result?.let { NotificationTransformer.toEntityFromNotificationSettingsOutput(it.notificationSettingsOutput) }!!
         } catch (e: Throwable) {
             logger.debug("unexpected getNotificationConfiguration error $e")
+            throw recognizeError(e)
+        }
+    }
+
+    override suspend fun getUserNotificationConfiguration(): NotificationConfiguration? {
+        if (!this.sudoUserClient.isSignedIn()) {
+            throw SudoNotificationClient.NotificationException.NotSignedInException()
+        }
+
+        try {
+            val input = GetUserAndDeviceSettingsInput(
+                bundleId = this.context.packageName,
+                deviceId = Optional.absent(),
+            )
+
+            val queryResponse = this.graphQLClient.query<GetUserAndDeviceNotificationSettingsQuery, GetUserAndDeviceNotificationSettingsQuery.Data>(
+                GetUserAndDeviceNotificationSettingsQuery.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
+
+            if (queryResponse.hasErrors()) {
+                logger.warning("errors = ${queryResponse.errors}")
+                throw interpretNotificationError(queryResponse.errors.first())
+            }
+            val result = queryResponse.data.getUserAndDeviceNotificationSettings.userAndDeviceNotificationSettingsOutput.user
+            return result?.let { NotificationTransformer.toEntityFromNotificationSettingsOutput(it.notificationSettingsOutput) }
+        } catch (e: Throwable) {
+            logger.debug("unexpected getUserAndDeviceNotificationConfiguration error $e")
+            throw recognizeError(e)
+        }
+    }
+
+    override suspend fun getUserAndDeviceNotificationConfiguration(device: NotificationDeviceInputProvider): UserAndDeviceNotificationConfiguration {
+        if (!this.sudoUserClient.isSignedIn()) {
+            throw SudoNotificationClient.NotificationException.NotSignedInException()
+        }
+
+        try {
+            val input = GetUserAndDeviceSettingsInput(
+                bundleId = device.bundleIdentifier,
+                deviceId = Optional.present(device.deviceIdentifier),
+            )
+
+            val queryResponse = this.graphQLClient.query<GetUserAndDeviceNotificationSettingsQuery, GetUserAndDeviceNotificationSettingsQuery.Data>(
+                GetUserAndDeviceNotificationSettingsQuery.OPERATION_DOCUMENT,
+                mapOf("input" to input),
+            )
+
+            if (queryResponse.hasErrors()) {
+                logger.warning("errors = ${queryResponse.errors}")
+                throw interpretNotificationError(queryResponse.errors.first())
+            }
+
+            val result = queryResponse.data.getUserAndDeviceNotificationSettings.userAndDeviceNotificationSettingsOutput
+            return UserAndDeviceNotificationConfiguration(
+                user = result.user?.let { NotificationTransformer.toEntityFromNotificationSettingsOutput(it.notificationSettingsOutput) },
+                device = result.device?.let { NotificationTransformer.toEntityFromNotificationSettingsOutput(it.notificationSettingsOutput) },
+            )
+        } catch (e: Throwable) {
+            logger.debug("unexpected getUserAndDeviceNotificationConfiguration error $e")
             throw recognizeError(e)
         }
     }
@@ -212,7 +282,7 @@ class DefaultSudoNotificationClient(
                 deviceId = device.deviceIdentifier,
                 clientEnv = ClientEnvType.valueOf(device.clientEnv.uppercase()),
                 bundleId = device.bundleIdentifier,
-                build = Optional.presentIfNotNull(BuildType.valueOf(device.buildType.uppercase())),
+                build = BuildType.valueOf(device.buildType.uppercase()),
                 locale = Optional.presentIfNotNull(device.locale),
                 version = Optional.presentIfNotNull(device.appVersion),
                 standardToken = Optional.presentIfNotNull(device.pushToken),
@@ -235,12 +305,37 @@ class DefaultSudoNotificationClient(
     override suspend fun setNotificationConfiguration(
         config: NotificationSettingsInput,
     ): NotificationConfiguration {
+        return this.setNotificationConfiguration(
+            bundleId = config.bundleId,
+            deviceId = config.deviceId,
+            filter = config.filter,
+            services = config.services,
+        )
+    }
+
+    override suspend fun setUserNotificationConfiguration(
+        config: UserNotificationSettingsInput,
+    ): NotificationConfiguration {
+        return this.setNotificationConfiguration(
+            bundleId = this.context.packageName,
+            deviceId = null,
+            filter = config.filter,
+            services = config.services,
+        )
+    }
+
+    private suspend fun setNotificationConfiguration(
+        bundleId: String,
+        deviceId: String?,
+        filter: List<NotificationFilterItem>,
+        services: List<NotificationMetaData>,
+    ): NotificationConfiguration {
         if (!this.sudoUserClient.isSignedIn()) {
             throw SudoNotificationClient.NotificationException.NotSignedInException()
         }
 
         try {
-            val filters = config.filter.map {
+            val mappedFilter = filter.map {
                 Filter(
                     serviceName = it.name,
                     actionType = FilterAction.valueOf(it.status!!),
@@ -248,7 +343,7 @@ class DefaultSudoNotificationClient(
                     enableMeta = Optional.presentIfNotNull(it.meta!!),
                 )
             }
-            val services = config.services.map { service ->
+            val mappedServices = services.map { service ->
                 NotifiableServiceSchema(
                     serviceName = service.serviceName,
                     schema = Optional.presentIfNotNull(
@@ -264,10 +359,10 @@ class DefaultSudoNotificationClient(
             }
 
             val input = UpdateSettingsInput(
-                deviceId = config.deviceId,
-                bundleId = config.bundleId,
-                services = services,
-                filter = filters,
+                deviceId = Optional.presentIfNotNull(deviceId),
+                bundleId = bundleId,
+                services = mappedServices,
+                filter = mappedFilter,
             )
             val mutationResponse = this.graphQLClient.mutate<UpdateNotificationSettingsMutation, UpdateNotificationSettingsMutation.Data>(
                 UpdateNotificationSettingsMutation.OPERATION_DOCUMENT,
@@ -278,7 +373,7 @@ class DefaultSudoNotificationClient(
                 logger.warning("errors = ${mutationResponse.errors}")
                 throw interpretNotificationError(mutationResponse.errors.first())
             }
-            return NotificationConfiguration(configs = config.filter)
+            return NotificationConfiguration(configs = filter)
         } catch (e: Throwable) {
             logger.debug("unexpected setNotificationConfiguration error $e")
             throw recognizeError(e)
@@ -294,7 +389,7 @@ class DefaultSudoNotificationClient(
             val input = UpdateInfoInput(
                 bundleId = device.bundleIdentifier,
                 deviceId = device.deviceIdentifier,
-                build = Optional.presentIfNotNull(BuildType.valueOf(device.buildType.uppercase())),
+                build = BuildType.valueOf(device.buildType.uppercase()),
                 locale = Optional.presentIfNotNull(device.locale),
                 version = Optional.presentIfNotNull(device.appVersion),
                 standardToken = Optional.presentIfNotNull(device.pushToken),
@@ -325,32 +420,42 @@ class DefaultSudoNotificationClient(
         if (error.contains(ERROR_SERVICE)) {
             return SudoNotificationClient.NotificationException.ServiceException(SERVICE_ERROR_MSG)
         }
-        if (error.contains(ERROR_ALREADY_REG)) {
-            return SudoNotificationClient.NotificationException.AlreadyRegisteredNotificationException(ALREADY_REG_ERROR_MSG)
+        if (error.contains(ERROR_DEVICE_ALREADY_REG)) {
+            return SudoNotificationClient.NotificationException.AlreadyRegisteredNotificationException(DEVICE_ALREADY_REG_ERROR_MSG)
         }
-        if (error.contains(ERROR_NOT_FOUND)) {
+        if (error.contains(ERROR_DEVICE_NOT_FOUND)) {
             return SudoNotificationClient.NotificationException.NoDeviceNotificationException(
-                NOT_FOUND_ERROR_MSG,
+                DEVICE_NOT_FOUND_ERROR_MSG,
             )
         }
-        if (error.contains(ERROR_UPDATE)) {
+        if (error.contains(ERROR_DEVICE_UPDATE)) {
             return SudoNotificationClient.NotificationException.RequestFailedException(
-                UPDATE_ERROR_MSG,
+                DEVICE_UPDATE_ERROR_MSG,
             )
         }
-        if (error.contains(ERROR_DELETE)) {
+        if (error.contains(ERROR_DEVICE_DELETE)) {
             return SudoNotificationClient.NotificationException.RequestFailedException(
-                DELETE_ERROR_MSG,
+                DEVICE_DELETE_ERROR_MSG,
             )
         }
-        if (error.contains(ERROR_READ)) {
+        if (error.contains(ERROR_DEVICE_READ)) {
             return SudoNotificationClient.NotificationException.RequestFailedException(
-                READ_ERROR_MSG,
+                DEVICE_READ_ERROR_MSG,
             )
         }
-        if (error.contains(ERROR_CREATE)) {
+        if (error.contains(ERROR_DEVICE_CREATE)) {
             return SudoNotificationClient.NotificationException.RequestFailedException(
-                CREATE_ERROR_MSG,
+                DEVICE_CREATE_ERROR_MSG,
+            )
+        }
+        if (error.contains(ERROR_USERINFO_UPDATE)) {
+            return SudoNotificationClient.NotificationException.RequestFailedException(
+                USERINFO_UPDATE_ERROR_MSG,
+            )
+        }
+        if (error.contains(ERROR_USERINFO_READ)) {
+            return SudoNotificationClient.NotificationException.RequestFailedException(
+                USERINFO_READ_ERROR_MSG,
             )
         }
         return SudoNotificationClient.NotificationException.RequestFailedException(e.toString())
@@ -364,7 +469,7 @@ fun recognizeError(e: Throwable): Throwable {
 
 private fun recognizeRootCause(e: Throwable?): Throwable? {
     // If we find a Sudo Platform exception, return that
-    if (e?.javaClass?.`package`?.name?.startsWith("com.sudoplatform.") ?: false) {
+    if (e?.javaClass?.`package`?.name?.startsWith("com.sudoplatform.") == true) {
         return e
     }
 

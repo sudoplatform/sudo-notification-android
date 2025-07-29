@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,6 +15,7 @@ import com.sudoplatform.sudonotification.types.NotificationConfiguration
 import com.sudoplatform.sudonotification.types.NotificationFilterItem
 import com.sudoplatform.sudonotification.types.NotificationMetaData
 import com.sudoplatform.sudonotification.types.NotificationSettingsInput
+import com.sudoplatform.sudonotification.types.UserNotificationSettingsInput
 import io.kotlintest.matchers.numerics.shouldBeExactly
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNotThrowAny
@@ -25,6 +26,7 @@ import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import timber.log.Timber
+import java.util.logging.Level
 
 /**
  * Test the operation of the [SudoNotificationClient].
@@ -52,8 +54,8 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
         Timber.plant(Timber.DebugTree())
 
         if (verbose) {
-            java.util.logging.Logger.getLogger("com.amazonaws").level = java.util.logging.Level.FINEST
-            java.util.logging.Logger.getLogger("org.apache.http").level = java.util.logging.Level.FINEST
+            java.util.logging.Logger.getLogger("com.amazonaws").level = Level.FINEST
+            java.util.logging.Logger.getLogger("org.apache.http").level = Level.FINEST
         }
 
         sampleNotifiableClient = TestNotifiableClient()
@@ -69,7 +71,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @After
-    fun fini() = runBlocking {
+    fun fini(): Unit = runBlocking {
         userClient.reset()
         Timber.uprootAll()
     }
@@ -128,7 +130,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun registerDeviceShouldNotThrow() = runBlocking {
+    fun registerDeviceShouldNotThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -142,7 +144,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun registerDevicesAgainShouldThrow() = runBlocking {
+    fun registerDevicesAgainShouldThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -158,7 +160,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun deRegisterDevicesShouldNotThrow() = runBlocking {
+    fun deRegisterDevicesShouldNotThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -174,7 +176,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun deRegisterInvalidDevicesShouldThrow() = runBlocking {
+    fun deRegisterInvalidDevicesShouldThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -192,7 +194,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun updateDevicesShouldNotThrow() = runBlocking {
+    fun updateDevicesShouldNotThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -210,7 +212,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun updateDeviceWithoutRegisterShouldThrow() = runBlocking {
+    fun updateDeviceWithoutRegisterShouldThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -224,7 +226,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun updateInvalidDeviceShouldThrow() = runBlocking {
+    fun updateInvalidDeviceShouldThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -245,7 +247,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun getNotificationConfigListAfterRegisterShouldReturnEmpty() = runBlocking {
+    fun getNotificationConfigListAfterRegisterShouldReturnEmpty(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -262,7 +264,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun getNotificationConfigListOnInvalidDeviceShouldThrow() = runBlocking {
+    fun getNotificationConfigListOnInvalidDeviceShouldThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -275,7 +277,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun setNotificationConfigShouldReturnSuccess() = runBlocking {
+    fun setNotificationConfigShouldReturnSuccess(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -283,7 +285,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
 
         notificationClient.registerNotification(deviceInfoProvider)
 
-        val confList = listOf<NotificationFilterItem>(NotificationFilterItem(name = TEST_SERVICE_NAME))
+        val confList = listOf(NotificationFilterItem(name = TEST_SERVICE_NAME))
         val schema = listOf<NotificationMetaData>(TestNotificationMetaData(TEST_SERVICE_NAME))
         val config = NotificationConfiguration(configs = confList)
         val input = NotificationSettingsInput(deviceInfoProvider.bundleIdentifier, deviceInfoProvider.deviceIdentifier, confList, schema)
@@ -297,14 +299,14 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun setNotificationConfigOnInvalidDeviceShouldThrow() = runBlocking {
+    fun setNotificationConfigOnInvalidDeviceShouldThrow(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
         signInAndRegister()
         logger.warning("user is ${userClient.getUserName()}")
 
-        val confList = listOf<NotificationFilterItem>(NotificationFilterItem(name = TEST_SERVICE_NAME))
+        val confList = listOf(NotificationFilterItem(name = TEST_SERVICE_NAME))
         val schema = listOf<NotificationMetaData>(TestNotificationMetaData(TEST_SERVICE_NAME))
         val input = NotificationSettingsInput(deviceInfoProvider.bundleIdentifier, deviceInfoProvider.deviceIdentifier, confList, schema)
 
@@ -316,7 +318,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun setAndgetNotificationConfigShouldMatch() = runBlocking {
+    fun setAndGetNotificationConfigShouldMatch(): Unit = runBlocking {
         // Can only run if client config files are present
         Assume.assumeTrue(clientConfigFilesPresent())
 
@@ -325,7 +327,7 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
         logger.warning("user is ${userClient.getUserName()}")
         notificationClient.registerNotification(deviceInfoProvider)
 
-        val confList = listOf<NotificationFilterItem>(
+        val confList = listOf(
             NotificationFilterItem(name = TEST_SERVICE_NAME),
             NotificationFilterItem(name = TEST_SERVICE_NAME, rules = TEST_RULE),
             NotificationFilterItem(name = TEST_ALT_SERVICE_NAME),
@@ -341,6 +343,113 @@ class SudoNotificationClientIntegrationTest : BaseIntegrationTest() {
         ret.configs shouldBe config.configs
 
         notificationClient.deRegisterNotification(deviceInfoProvider)
+
+        deRegister()
+    }
+
+    @Test
+    fun getUserNotificationConfigListBeforeBeingSetShouldReturnNull(): Unit = runBlocking {
+        // Can only run if client config files are present
+        Assume.assumeTrue(clientConfigFilesPresent())
+
+        signInAndRegister()
+
+        val notifConf = notificationClient.getUserNotificationConfiguration()
+        notifConf shouldBe null
+
+        deRegister()
+    }
+
+    @Test
+    fun setAndGetUserNotificationConfigShouldMatch(): Unit = runBlocking {
+        // Can only run if client config files are present
+        Assume.assumeTrue(clientConfigFilesPresent())
+
+        signInAndRegister()
+
+        logger.warning("user is ${userClient.getUserName()}")
+
+        val confList = listOf(
+            NotificationFilterItem(name = TEST_SERVICE_NAME),
+            NotificationFilterItem(name = TEST_SERVICE_NAME, rules = TEST_RULE),
+            NotificationFilterItem(name = TEST_ALT_SERVICE_NAME),
+        )
+        val config = NotificationConfiguration(configs = confList)
+        config.updateConfig(uuid = confList.first { it.name == TEST_ALT_SERVICE_NAME }.uuid!!, status = false)
+
+        val schema = listOf<NotificationMetaData>(TestNotificationMetaData(TEST_SERVICE_NAME), TestNotificationMetaData(TEST_ALT_SERVICE_NAME))
+        val input = UserNotificationSettingsInput(config.configs, schema)
+        notificationClient.setUserNotificationConfiguration(input)
+        val ret = notificationClient.getUserNotificationConfiguration()
+        ret shouldBe config
+        ret?.configs shouldBe config.configs
+
+        deRegister()
+    }
+
+    @Test
+    fun getUserAndDeviceNotificationConfigBeforeBeingSetShouldReturnEmptyConfig(): Unit = runBlocking {
+        // Can only run if client config files are present
+        Assume.assumeTrue(clientConfigFilesPresent())
+
+        signInAndRegister()
+        notificationClient.registerNotification(deviceInfoProvider)
+
+        val notifConf = notificationClient.getUserAndDeviceNotificationConfiguration(deviceInfoProvider)
+        notifConf.user shouldBe null
+        notifConf.device shouldBe null
+
+        notificationClient.deRegisterNotification(deviceInfoProvider)
+        deRegister()
+    }
+
+    @Test
+    fun setAndGetUserAndDeviceNotificationConfigShouldMatch(): Unit = runBlocking {
+        // Can only run if client config files are present
+        Assume.assumeTrue(clientConfigFilesPresent())
+
+        signInAndRegister()
+
+        notificationClient.registerNotification(deviceInfoProvider)
+
+        val userConfList = listOf(
+            NotificationFilterItem(name = TEST_SERVICE_NAME),
+            NotificationFilterItem(name = TEST_SERVICE_NAME, rules = TEST_RULE),
+            NotificationFilterItem(name = TEST_ALT_SERVICE_NAME),
+        )
+        val userConfig = NotificationConfiguration(configs = userConfList)
+        userConfig.updateConfig(uuid = userConfList.first { it.name == TEST_ALT_SERVICE_NAME }.uuid!!, status = false)
+
+        val deviceConfList = listOf(
+            NotificationFilterItem(name = TEST_SERVICE_NAME, rules = TEST_RULE),
+            NotificationFilterItem(name = TEST_ALT_SERVICE_NAME),
+        )
+        val deviceConfig = NotificationConfiguration(configs = deviceConfList)
+        deviceConfig.updateConfig(uuid = userConfList.first { it.name == TEST_ALT_SERVICE_NAME }.uuid!!, status = false)
+
+        val schema = listOf<NotificationMetaData>(TestNotificationMetaData(TEST_SERVICE_NAME), TestNotificationMetaData(TEST_ALT_SERVICE_NAME))
+
+        val userInput = UserNotificationSettingsInput(userConfig.configs, schema)
+        notificationClient.setUserNotificationConfiguration(userInput)
+
+        val ret1 = notificationClient.getUserAndDeviceNotificationConfiguration(deviceInfoProvider)
+        ret1.user shouldBe userConfig
+        ret1.user?.configs shouldBe userConfig.configs
+        ret1.device shouldBe null
+
+        val deviceInput = NotificationSettingsInput(
+            deviceId = deviceInfoProvider.deviceIdentifier,
+            bundleId = deviceInfoProvider.bundleIdentifier,
+            filter = deviceConfig.configs,
+            services = schema,
+        )
+        notificationClient.setNotificationConfiguration(deviceInput)
+
+        val ret2 = notificationClient.getUserAndDeviceNotificationConfiguration(deviceInfoProvider)
+        ret2.user shouldBe userConfig
+        ret2.user?.configs shouldBe userConfig.configs
+        ret2.device shouldBe deviceConfig
+        ret2.device?.configs shouldBe deviceConfig.configs
 
         deRegister()
     }

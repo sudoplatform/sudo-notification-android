@@ -50,6 +50,7 @@ if (project.findProperty("tag") && sonatypeStagingProfileId) {
     nexusPublishing {
         repositories {
             sonatype {
+                nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
                 stagingProfileId = sonatypeStagingProfileId
 
                 username = nexusUsername
