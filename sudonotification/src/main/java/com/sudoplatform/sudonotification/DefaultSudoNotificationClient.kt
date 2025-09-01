@@ -10,7 +10,7 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import com.amazonaws.services.cognitoidentity.model.NotAuthorizedException
 import com.amplifyframework.api.graphql.GraphQLResponse
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.google.firebase.messaging.RemoteMessage
 import com.sudoplatform.sudoapiclient.ApiClientManager
 import com.sudoplatform.sudoconfigmanager.DefaultSudoConfigManager
@@ -68,14 +68,14 @@ class DefaultSudoNotificationClient(
     graphQLClient: GraphQLClient? = null,
     private val logger: Logger = Logger(LogConstants.SUDOLOG_TAG, AndroidUtilsLogDriver(LogLevel.INFO)),
 ) : SudoNotificationClient {
-
     init {
         val configManager = DefaultSudoConfigManager(context)
         if (configManager.getConfigSet("apiService") == null) {
             throw SudoNotificationClient.NotificationException.InvalidConfigException("apiService not found")
         }
-        val notificationConfig = configManager.getConfigSet("notificationService")
-            ?: throw SudoNotificationClient.NotificationException.NoNotificationConfigException()
+        val notificationConfig =
+            configManager.getConfigSet("notificationService")
+                ?: throw SudoNotificationClient.NotificationException.NoNotificationConfigException()
 
         // The old way of identifying notifiable services was via a notifiableServices
         // item in notificationService sudoplatformconfig.json stanza.
@@ -87,11 +87,12 @@ class DefaultSudoNotificationClient(
         // way as well as the new way.
 
         val nApps = notificationConfig.optJSONArray("notifiableServices")
-        val notifyingApps = if (nApps == null) {
-            mutableListOf<String>()
-        } else {
-            MutableList(nApps.length()) { nApps.getString(it) }
-        }
+        val notifyingApps =
+            if (nApps == null) {
+                mutableListOf<String>()
+            } else {
+                MutableList(nApps.length()) { nApps.getString(it) }
+            }
 
         for (ns in notifiableServices) {
             // Old way
@@ -137,7 +138,7 @@ class DefaultSudoNotificationClient(
         private const val ERROR_INVALID_ARGUMENT = "sudoplatform.InvalidArgumentError"
     }
 
-    override val version: String = "3.0.0"
+    override val version: String = "5.0.0"
 
     private val graphQLClient: GraphQLClient =
         graphQLClient ?: ApiClientManager.getClient(
@@ -153,8 +154,9 @@ class DefaultSudoNotificationClient(
         if (message.data.isEmpty()) {
             throw SudoNotificationClient.NotificationException.NotificationPayloadException(PAYLOAD_ERROR_MSG)
         }
-        val sudoplatform = message.data[SUDO_PLATFORM_KEY]
-            ?: throw SudoNotificationClient.NotificationException.NotificationPayloadException(PAYLOAD_ERROR_MSG)
+        val sudoplatform =
+            message.data[SUDO_PLATFORM_KEY]
+                ?: throw SudoNotificationClient.NotificationException.NotificationPayloadException(PAYLOAD_ERROR_MSG)
 
         val serviceName = JSONObject(sudoplatform).getString("servicename")
         val service = notifiableServices.find { it.serviceName == serviceName }
@@ -173,10 +175,11 @@ class DefaultSudoNotificationClient(
         try {
             val input = GetSettingsInput(bundleId = device.bundleIdentifier, deviceId = device.deviceIdentifier)
 
-            val queryResponse = this.graphQLClient.query<GetNotificationSettingsQuery, GetNotificationSettingsQuery.Data>(
-                GetNotificationSettingsQuery.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val queryResponse =
+                this.graphQLClient.query<GetNotificationSettingsQuery, GetNotificationSettingsQuery.Data>(
+                    GetNotificationSettingsQuery.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (queryResponse.hasErrors()) {
                 logger.warning("errors = ${queryResponse.errors}")
@@ -196,15 +199,17 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val input = GetUserAndDeviceSettingsInput(
-                bundleId = this.context.packageName,
-                deviceId = Optional.absent(),
-            )
+            val input =
+                GetUserAndDeviceSettingsInput(
+                    bundleId = this.context.packageName,
+                    deviceId = Optional.absent(),
+                )
 
-            val queryResponse = this.graphQLClient.query<GetUserAndDeviceNotificationSettingsQuery, GetUserAndDeviceNotificationSettingsQuery.Data>(
-                GetUserAndDeviceNotificationSettingsQuery.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val queryResponse =
+                this.graphQLClient.query<GetUserAndDeviceNotificationSettingsQuery, GetUserAndDeviceNotificationSettingsQuery.Data>(
+                    GetUserAndDeviceNotificationSettingsQuery.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (queryResponse.hasErrors()) {
                 logger.warning("errors = ${queryResponse.errors}")
@@ -218,21 +223,25 @@ class DefaultSudoNotificationClient(
         }
     }
 
-    override suspend fun getUserAndDeviceNotificationConfiguration(device: NotificationDeviceInputProvider): UserAndDeviceNotificationConfiguration {
+    override suspend fun getUserAndDeviceNotificationConfiguration(
+        device: NotificationDeviceInputProvider,
+    ): UserAndDeviceNotificationConfiguration {
         if (!this.sudoUserClient.isSignedIn()) {
             throw SudoNotificationClient.NotificationException.NotSignedInException()
         }
 
         try {
-            val input = GetUserAndDeviceSettingsInput(
-                bundleId = device.bundleIdentifier,
-                deviceId = Optional.present(device.deviceIdentifier),
-            )
+            val input =
+                GetUserAndDeviceSettingsInput(
+                    bundleId = device.bundleIdentifier,
+                    deviceId = Optional.present(device.deviceIdentifier),
+                )
 
-            val queryResponse = this.graphQLClient.query<GetUserAndDeviceNotificationSettingsQuery, GetUserAndDeviceNotificationSettingsQuery.Data>(
-                GetUserAndDeviceNotificationSettingsQuery.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val queryResponse =
+                this.graphQLClient.query<GetUserAndDeviceNotificationSettingsQuery, GetUserAndDeviceNotificationSettingsQuery.Data>(
+                    GetUserAndDeviceNotificationSettingsQuery.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (queryResponse.hasErrors()) {
                 logger.warning("errors = ${queryResponse.errors}")
@@ -242,7 +251,12 @@ class DefaultSudoNotificationClient(
             val result = queryResponse.data.getUserAndDeviceNotificationSettings.userAndDeviceNotificationSettingsOutput
             return UserAndDeviceNotificationConfiguration(
                 user = result.user?.let { NotificationTransformer.toEntityFromNotificationSettingsOutput(it.notificationSettingsOutput) },
-                device = result.device?.let { NotificationTransformer.toEntityFromNotificationSettingsOutput(it.notificationSettingsOutput) },
+                device =
+                    result.device?.let {
+                        NotificationTransformer.toEntityFromNotificationSettingsOutput(
+                            it.notificationSettingsOutput,
+                        )
+                    },
             )
         } catch (e: Throwable) {
             logger.debug("unexpected getUserAndDeviceNotificationConfiguration error $e")
@@ -257,10 +271,11 @@ class DefaultSudoNotificationClient(
 
         try {
             val input = DeleteAppFromDeviceInput(bundleId = device.bundleIdentifier, deviceId = device.deviceIdentifier)
-            val mutationResponse = this.graphQLClient.mutate<DeleteAppFromDeviceMutation, DeleteAppFromDeviceMutation.Data>(
-                DeleteAppFromDeviceMutation.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val mutationResponse =
+                this.graphQLClient.mutate<DeleteAppFromDeviceMutation, DeleteAppFromDeviceMutation.Data>(
+                    DeleteAppFromDeviceMutation.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (mutationResponse.hasErrors()) {
                 logger.warning("errors = ${mutationResponse.errors}")
@@ -278,19 +293,21 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val input = RegisterAppOnDeviceInput(
-                deviceId = device.deviceIdentifier,
-                clientEnv = ClientEnvType.valueOf(device.clientEnv.uppercase()),
-                bundleId = device.bundleIdentifier,
-                build = BuildType.valueOf(device.buildType.uppercase()),
-                locale = Optional.presentIfNotNull(device.locale),
-                version = Optional.presentIfNotNull(device.appVersion),
-                standardToken = Optional.presentIfNotNull(device.pushToken),
-            )
-            val mutationResponse = this.graphQLClient.mutate<RegisterAppOnDeviceMutation, RegisterAppOnDeviceMutation.Data>(
-                RegisterAppOnDeviceMutation.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val input =
+                RegisterAppOnDeviceInput(
+                    deviceId = device.deviceIdentifier,
+                    clientEnv = ClientEnvType.valueOf(device.clientEnv.uppercase()),
+                    bundleId = device.bundleIdentifier,
+                    build = BuildType.valueOf(device.buildType.uppercase()),
+                    locale = Optional.presentIfNotNull(device.locale),
+                    version = Optional.presentIfNotNull(device.appVersion),
+                    standardToken = Optional.presentIfNotNull(device.pushToken),
+                )
+            val mutationResponse =
+                this.graphQLClient.mutate<RegisterAppOnDeviceMutation, RegisterAppOnDeviceMutation.Data>(
+                    RegisterAppOnDeviceMutation.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (mutationResponse.hasErrors()) {
                 logger.warning("errors = ${mutationResponse.errors}")
@@ -302,27 +319,21 @@ class DefaultSudoNotificationClient(
         }
     }
 
-    override suspend fun setNotificationConfiguration(
-        config: NotificationSettingsInput,
-    ): NotificationConfiguration {
-        return this.setNotificationConfiguration(
+    override suspend fun setNotificationConfiguration(config: NotificationSettingsInput): NotificationConfiguration =
+        this.setNotificationConfiguration(
             bundleId = config.bundleId,
             deviceId = config.deviceId,
             filter = config.filter,
             services = config.services,
         )
-    }
 
-    override suspend fun setUserNotificationConfiguration(
-        config: UserNotificationSettingsInput,
-    ): NotificationConfiguration {
-        return this.setNotificationConfiguration(
+    override suspend fun setUserNotificationConfiguration(config: UserNotificationSettingsInput): NotificationConfiguration =
+        this.setNotificationConfiguration(
             bundleId = this.context.packageName,
             deviceId = null,
             filter = config.filter,
             services = config.services,
         )
-    }
 
     private suspend fun setNotificationConfiguration(
         bundleId: String,
@@ -335,39 +346,44 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val mappedFilter = filter.map {
-                Filter(
-                    serviceName = it.name,
-                    actionType = FilterAction.valueOf(it.status!!),
-                    rule = it.rules!!,
-                    enableMeta = Optional.presentIfNotNull(it.meta!!),
-                )
-            }
-            val mappedServices = services.map { service ->
-                NotifiableServiceSchema(
-                    serviceName = service.serviceName,
-                    schema = Optional.presentIfNotNull(
-                        service.schema.map { schema ->
-                            SchemaEntry(
-                                description = schema.description,
-                                type = schema.type,
-                                fieldName = schema.fieldName,
-                            )
-                        },
-                    ),
-                )
-            }
+            val mappedFilter =
+                filter.map {
+                    Filter(
+                        serviceName = it.name,
+                        actionType = FilterAction.valueOf(it.status!!),
+                        rule = it.rules!!,
+                        enableMeta = Optional.presentIfNotNull(it.meta!!),
+                    )
+                }
+            val mappedServices =
+                services.map { service ->
+                    NotifiableServiceSchema(
+                        serviceName = service.serviceName,
+                        schema =
+                            Optional.presentIfNotNull(
+                                service.schema.map { schema ->
+                                    SchemaEntry(
+                                        description = schema.description,
+                                        type = schema.type,
+                                        fieldName = schema.fieldName,
+                                    )
+                                },
+                            ),
+                    )
+                }
 
-            val input = UpdateSettingsInput(
-                deviceId = Optional.presentIfNotNull(deviceId),
-                bundleId = bundleId,
-                services = mappedServices,
-                filter = mappedFilter,
-            )
-            val mutationResponse = this.graphQLClient.mutate<UpdateNotificationSettingsMutation, UpdateNotificationSettingsMutation.Data>(
-                UpdateNotificationSettingsMutation.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val input =
+                UpdateSettingsInput(
+                    deviceId = Optional.presentIfNotNull(deviceId),
+                    bundleId = bundleId,
+                    services = mappedServices,
+                    filter = mappedFilter,
+                )
+            val mutationResponse =
+                this.graphQLClient.mutate<UpdateNotificationSettingsMutation, UpdateNotificationSettingsMutation.Data>(
+                    UpdateNotificationSettingsMutation.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (mutationResponse.hasErrors()) {
                 logger.warning("errors = ${mutationResponse.errors}")
@@ -386,18 +402,20 @@ class DefaultSudoNotificationClient(
         }
 
         try {
-            val input = UpdateInfoInput(
-                bundleId = device.bundleIdentifier,
-                deviceId = device.deviceIdentifier,
-                build = BuildType.valueOf(device.buildType.uppercase()),
-                locale = Optional.presentIfNotNull(device.locale),
-                version = Optional.presentIfNotNull(device.appVersion),
-                standardToken = Optional.presentIfNotNull(device.pushToken),
-            )
-            val mutationResponse = this.graphQLClient.mutate<UpdateDeviceInfoMutation, UpdateDeviceInfoMutation.Data>(
-                UpdateDeviceInfoMutation.OPERATION_DOCUMENT,
-                mapOf("input" to input),
-            )
+            val input =
+                UpdateInfoInput(
+                    bundleId = device.bundleIdentifier,
+                    deviceId = device.deviceIdentifier,
+                    build = BuildType.valueOf(device.buildType.uppercase()),
+                    locale = Optional.presentIfNotNull(device.locale),
+                    version = Optional.presentIfNotNull(device.appVersion),
+                    standardToken = Optional.presentIfNotNull(device.pushToken),
+                )
+            val mutationResponse =
+                this.graphQLClient.mutate<UpdateDeviceInfoMutation, UpdateDeviceInfoMutation.Data>(
+                    UpdateDeviceInfoMutation.OPERATION_DOCUMENT,
+                    mapOf("input" to input),
+                )
 
             if (mutationResponse.hasErrors()) {
                 logger.warning("errors = ${mutationResponse.errors}")
@@ -463,13 +481,16 @@ class DefaultSudoNotificationClient(
 }
 
 @VisibleForTesting
-fun recognizeError(e: Throwable): Throwable {
-    return recognizeRootCause(e) ?: SudoNotificationClient.NotificationException.UnknownException(e)
-}
+fun recognizeError(e: Throwable): Throwable = recognizeRootCause(e) ?: SudoNotificationClient.NotificationException.UnknownException(e)
 
 private fun recognizeRootCause(e: Throwable?): Throwable? {
     // If we find a Sudo Platform exception, return that
-    if (e?.javaClass?.`package`?.name?.startsWith("com.sudoplatform.") == true) {
+    if (e
+            ?.javaClass
+            ?.`package`
+            ?.name
+            ?.startsWith("com.sudoplatform.") == true
+    ) {
         return e
     }
 

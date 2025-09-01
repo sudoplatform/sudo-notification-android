@@ -13,7 +13,6 @@ data class UserAndDeviceNotificationConfiguration(
      * User level notification configuration or null if none set.
      */
     val user: NotificationConfiguration?,
-
     /**
      * Device level notification configuration or null if none set.
      */

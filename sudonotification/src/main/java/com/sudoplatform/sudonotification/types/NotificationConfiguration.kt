@@ -9,7 +9,7 @@ package com.sudoplatform.sudonotification.types
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
-import java.util.*
+import java.util.UUID
 
 @Parcelize
 data class NotificationFilterItem(
@@ -43,7 +43,13 @@ data class NotificationConfiguration(
 
         const val DEFAULT_RULE_STRING = "{\"==\" : [ 1, 1]}"
     }
-    fun updateConfig(uuid: UUID, status: Boolean, rules: String = "", meta: String = "") {
+
+    fun updateConfig(
+        uuid: UUID,
+        status: Boolean,
+        rules: String = "",
+        meta: String = "",
+    ) {
         configs.find { it.uuid == uuid }?.let {
             if (meta.isNotEmpty()) {
                 it.meta = meta

@@ -17,7 +17,6 @@ import org.mockito.kotlin.mock
  */
 @Suppress("UNUSED_VARIABLE")
 class Samples : BaseTests() {
-
     private val context by before { mock<Context>() }
 
     @Test

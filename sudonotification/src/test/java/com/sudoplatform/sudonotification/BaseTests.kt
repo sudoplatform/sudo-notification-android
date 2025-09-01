@@ -30,11 +30,10 @@ abstract class BaseTests : PropertyResetter by ActualPropertyResetter() {
     @JvmField
     val timberLogRule = TimberLogRule()
 
-    private val mockLogDriver by before {
+    private val mockLogDriver: LogDriverInterface =
         mock<LogDriverInterface>().stub {
             on { logLevel } doReturn LogLevel.VERBOSE
         }
-    }
 
     protected val mockLogger by before {
         Logger("mock", mockLogDriver)

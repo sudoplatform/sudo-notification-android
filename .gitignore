@@ -64,3 +64,6 @@ sudoplatformconfig.json
 jacoco.exec
 .vscode/
 sudonotification/src/main/assets/**
+
+# ai helper files
+.mcp-project.json

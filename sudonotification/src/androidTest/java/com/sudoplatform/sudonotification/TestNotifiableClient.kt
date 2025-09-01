@@ -12,7 +12,6 @@ import com.sudoplatform.sudonotification.types.NotificationMetaData
 import com.sudoplatform.sudonotification.types.NotificationSchemaEntry
 
 class TestNotifiableClient : NotifiableClient {
-
     override val serviceName: String
         get() = "SampleService"
 
@@ -20,17 +19,19 @@ class TestNotifiableClient : NotifiableClient {
         TODO("Not yet implemented")
     }
 
-    override fun getSchema(): NotificationMetaData {
-        return TestNotificationMetaData(this.serviceName)
-    }
+    override fun getSchema(): NotificationMetaData = TestNotificationMetaData(this.serviceName)
 }
 
-class TestNotificationMetaData(override var serviceName: String) : NotificationMetaData {
+class TestNotificationMetaData(
+    override var serviceName: String,
+) : NotificationMetaData {
     override val schema: List<NotificationSchemaEntry>
         get() = listOf<TestNotificationSchemaEntry>(TestNotificationSchemaEntry("f1"), TestNotificationSchemaEntry("f2"))
 }
 
-class TestNotificationSchemaEntry(private val field: String) : NotificationSchemaEntry {
+class TestNotificationSchemaEntry(
+    private val field: String,
+) : NotificationSchemaEntry {
     override var fieldName: String = "meta.$field"
     override val description: String
         get() = "test service field"

@@ -21,11 +21,11 @@ import timber.log.Timber
  * Test the operation of the [SudoNotificationClient].
  */
 abstract class BaseIntegrationTest {
-
     protected val context: Context = ApplicationProvider.getApplicationContext<Context>()
 
     protected val userClient by lazy {
-        SudoUserClient.builder(context)
+        SudoUserClient
+            .builder(context)
             .setNamespace("ns-client-test")
             .build()
     }
@@ -45,22 +45,22 @@ abstract class BaseIntegrationTest {
         val privateKey = readTextFile("register_key.private")
         val keyId = readTextFile("register_key.id")
 
-        val authProvider = TESTAuthenticationProvider(
-            name = "ns-client-test",
-            privateKey = privateKey,
-            publicKey = null,
-            keyManager = keyManager,
-            keyId = keyId,
-        )
+        val authProvider =
+            TESTAuthenticationProvider(
+                name = "ns-client-test",
+                privateKey = privateKey,
+                publicKey = null,
+                keyManager = keyManager,
+                keyId = keyId,
+            )
 
         userClient.registerWithAuthenticationProvider(authProvider, "ns-client-test")
     }
 
-    private fun readTextFile(fileName: String): String {
-        return context.assets.open(fileName).bufferedReader().use {
+    private fun readTextFile(fileName: String): String =
+        context.assets.open(fileName).bufferedReader().use {
             it.readText().trim()
         }
-    }
 
     private fun identityTokenHasAttribute(name: String): Boolean {
         userClient.isSignedIn() shouldBe true
@@ -95,11 +95,12 @@ abstract class BaseIntegrationTest {
     }
 
     protected fun clientConfigFilesPresent(): Boolean {
-        val configFiles = context.assets.list("")?.filter { fileName ->
-            fileName == "sudoplatformconfig.json" ||
-                fileName == "register_key.private" ||
-                fileName == "register_key.id"
-        } ?: emptyList()
+        val configFiles =
+            context.assets.list("")?.filter { fileName ->
+                fileName == "sudoplatformconfig.json" ||
+                    fileName == "register_key.private" ||
+                    fileName == "register_key.id"
+            } ?: emptyList()
         Timber.d("config files present ${configFiles.size}")
         return configFiles.size == 3
     }

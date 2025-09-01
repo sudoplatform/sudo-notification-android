@@ -28,7 +28,6 @@ import java.util.Objects
  * @sample com.sudoplatform.sudonotification.samples.Samples.sudoNotificationClient
  */
 interface SudoNotificationClient {
-
     companion object {
         /** Create a [Builder] for [SudoNotificationClient]. */
         @JvmStatic
@@ -49,41 +48,46 @@ interface SudoNotificationClient {
         /**
          * Provide the application context (required input).
          */
-        fun setContext(context: Context) = also {
-            this.context = context
-        }
+        fun setContext(context: Context) =
+            also {
+                this.context = context
+            }
 
         /**
          * Provide the implementation of the [SudoUserClient] used to perform
          * sign in and ownership operations (required input).
          */
-        fun setSudoUserClient(sudoUserClient: SudoUserClient) = also {
-            this.sudoUserClient = sudoUserClient
-        }
+        fun setSudoUserClient(sudoUserClient: SudoUserClient) =
+            also {
+                this.sudoUserClient = sudoUserClient
+            }
 
         /**
          * Provide the implementation of [NotifiableClient] (required input)
          */
-        fun setNotifiableClients(notifiableServices: List<NotifiableClient>) = also {
-            this.notifiableServices = notifiableServices
-        }
+        fun setNotifiableClients(notifiableServices: List<NotifiableClient>) =
+            also {
+                this.notifiableServices = notifiableServices
+            }
 
         /**
          * Provide an [GraphQLClient] for the [SudoNotificationClient] to use
          * (optional input). If this is not supplied, an [GraphQLClient] will
          * be constructed and used.
          */
-        fun setGraphQLClient(graphQLClient: GraphQLClient) = also {
-            this.graphQLClient = graphQLClient
-        }
+        fun setGraphQLClient(graphQLClient: GraphQLClient) =
+            also {
+                this.graphQLClient = graphQLClient
+            }
 
         /**
          * Provide the implementation of the [Logger] used for logging errors (optional input).
          * If a value is not supplied a default implementation will be used.
          */
-        fun setLogger(logger: Logger) = also {
-            this.logger = logger
-        }
+        fun setLogger(logger: Logger) =
+            also {
+                this.logger = logger
+            }
 
         /**
          * Construct the [SudoNotificationClient]. Will throw a [NullPointerException] if
@@ -94,12 +98,13 @@ interface SudoNotificationClient {
             Objects.requireNonNull(context, "Context must be provided.")
             Objects.requireNonNull(sudoUserClient, "SudoUserClient must be provided.")
 
-            val graphQLClient = graphQLClient
-                ?: ApiClientManager.getClient(
-                    this@Builder.context!!,
-                    this@Builder.sudoUserClient!!,
-                    "notificationService",
-                )
+            val graphQLClient =
+                graphQLClient
+                    ?: ApiClientManager.getClient(
+                        this@Builder.context!!,
+                        this@Builder.sudoUserClient!!,
+                        "notificationService",
+                    )
 
             return DefaultSudoNotificationClient(
                 context = context!!,
@@ -127,31 +132,68 @@ interface SudoNotificationClient {
      * @property message Accompanying message for the exception.
      * @property cause The cause for the exception.
      */
-    sealed class NotificationException(message: String? = null, cause: Throwable? = null) : RuntimeException(message, cause) {
-        class InvalidConfigException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class NotSignedInException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class NoNotificationConfigException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class AccountLockedException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class AlreadyRegisteredNotificationException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class NoDeviceNotificationException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class NotAuthorizedException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class ServiceException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class RequestFailedException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class NotificationPayloadException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class InvalidArgumentException(message: String? = null, cause: Throwable? = null) :
-            NotificationException(message = message, cause = cause)
-        class UnknownException(cause: Throwable) :
-            NotificationException(cause = cause)
+    sealed class NotificationException(
+        message: String? = null,
+        cause: Throwable? = null,
+    ) : RuntimeException(message, cause) {
+        class InvalidConfigException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class NotSignedInException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class NoNotificationConfigException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class AccountLockedException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class AlreadyRegisteredNotificationException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class NoDeviceNotificationException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class NotAuthorizedException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class ServiceException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class RequestFailedException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class NotificationPayloadException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class InvalidArgumentException(
+            message: String? = null,
+            cause: Throwable? = null,
+        ) : NotificationException(message = message, cause = cause)
+
+        class UnknownException(
+            cause: Throwable,
+        ) : NotificationException(cause = cause)
     }
 
     /**

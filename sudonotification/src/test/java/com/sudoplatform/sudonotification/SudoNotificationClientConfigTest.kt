@@ -9,6 +9,7 @@ package com.sudoplatform.sudonotification
 import android.content.Context
 import com.sudoplatform.sudologging.AndroidUtilsLogDriver
 import com.sudoplatform.sudologging.LogLevel
+import com.sudoplatform.sudologging.Logger
 import com.sudoplatform.sudonotification.logging.LogConstants
 import com.sudoplatform.sudouser.SudoUserClient
 import io.kotlintest.shouldThrow
@@ -22,22 +23,20 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class SudoNotificationClientConfigTest : BaseTests() {
-    private val mockContext by before {
-        mock<Context>()
-    }
-    private val mockUserClient by before {
-        mock<SudoUserClient>()
-    }
+    private val mockContext: Context = mock()
+    private val mockUserClient: SudoUserClient = mock()
 
     @Test
     fun shouldThrowIfConfigMissing() {
-        val logger = com.sudoplatform.sudologging.Logger(
-            LogConstants.SUDOLOG_TAG,
-            AndroidUtilsLogDriver(LogLevel.INFO),
-        )
+        val logger =
+            Logger(
+                LogConstants.SUDOLOG_TAG,
+                AndroidUtilsLogDriver(LogLevel.INFO),
+            )
 
         shouldThrow<NullPointerException> {
-            SudoNotificationClient.builder()
+            SudoNotificationClient
+                .builder()
                 .setContext(mockContext)
                 .setSudoUserClient(mockUserClient)
                 .setLogger(logger)

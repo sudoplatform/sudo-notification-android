@@ -9,7 +9,7 @@ package com.sudoplatform.sudonotification.types.transformers
 import com.sudoplatform.sudonotification.graphql.fragment.NotificationSettingsOutput
 import com.sudoplatform.sudonotification.types.NotificationConfiguration
 import com.sudoplatform.sudonotification.types.NotificationFilterItem
-import java.util.*
+import java.util.UUID
 
 internal object NotificationTransformer {
     /**
@@ -18,19 +18,18 @@ internal object NotificationTransformer {
      * @param notificationSettingsOutput The result of the GraphQL query.
      * @return The [NotificationConfiguration] entity type.
      */
-    fun toEntityFromNotificationSettingsOutput(
-        notificationSettingsOutput: NotificationSettingsOutput,
-    ): NotificationConfiguration {
-        val configs: List<NotificationFilterItem> = notificationSettingsOutput.filter
-            .map {
-                NotificationFilterItem(
-                    UUID.randomUUID(),
-                    name = it.serviceName,
-                    status = it.actionType.toString().uppercase(),
-                    rules = it.rule,
-                    meta = it.enableMeta,
-                )
-            }
+    fun toEntityFromNotificationSettingsOutput(notificationSettingsOutput: NotificationSettingsOutput): NotificationConfiguration {
+        val configs: List<NotificationFilterItem> =
+            notificationSettingsOutput.filter
+                .map {
+                    NotificationFilterItem(
+                        UUID.randomUUID(),
+                        name = it.serviceName,
+                        status = it.actionType.toString().uppercase(),
+                        rules = it.rule,
+                        meta = it.enableMeta,
+                    )
+                }
         return NotificationConfiguration(configs = configs)
     }
 }
