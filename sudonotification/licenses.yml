@@ -808,60 +808,12 @@
   license: Apache 2.0
   licenseUrl: http://aws.amazon.com/apache2.0
   url: https://github.com/aws-amplify/amplify-android
-- artifact: com.apollographql.apollo3:apollo-annotations-jvm:+
-  name: apollo-annotations-jvm
-  copyrightHolder: Apollo Graph Inc
+- artifact: org.slf4j:slf4j-api:+
+  name: slf4j-api
+  copyrightHolder: QOS.ch
   license: MIT License
-  licenseUrl: https://raw.githubusercontent.com/apollographql/apollo-kotlin/main/LICENSE
-  url: https://github.com/apollographql/apollo-kotlin/
-- artifact: com.apollographql.apollo3:apollo-api-jvm:+
-  name: apollo-api-jvm
-  copyrightHolder: Apollo Graph Inc
-  license: MIT License
-  licenseUrl: https://raw.githubusercontent.com/apollographql/apollo-kotlin/main/LICENSE
-  url: https://github.com/apollographql/apollo-kotlin/
-- artifact: com.apollographql.apollo3:apollo-mpp-utils-jvm:+
-  name: apollo-mpp-utils-jvm
-  copyrightHolder: Apollo Graph Inc
-  license: MIT License
-  licenseUrl: https://raw.githubusercontent.com/apollographql/apollo-kotlin/main/LICENSE
-  url: https://github.com/apollographql/apollo-kotlin/
-- artifact: com.apollographql.apollo3:apollo-runtime-jvm:+
-  name: apollo-runtime-jvm
-  copyrightHolder: Apollo Graph Inc
-  license: MIT License
-  licenseUrl: https://raw.githubusercontent.com/apollographql/apollo-kotlin/main/LICENSE
-  url: https://github.com/apollographql/apollo-kotlin/
-- artifact: com.google.android.gms:play-services-auth-api-phone:+
-  name: play-services-auth-api-phone
-  copyrightHolder: Google, Inc.
-  license: Android Software Development Kit License
-  licenseUrl: https://developer.android.com/studio/terms.html
-  url: https://developers.google.com/android/guides/overview
-- artifact: com.google.android.gms:play-services-auth-base:+
-  name: play-services-auth-base
-  copyrightHolder: Google, Inc.
-  license: Android Software Development Kit License
-  licenseUrl: https://developer.android.com/studio/terms.html
-  url: https://developers.google.com/android/guides/overview
-- artifact: com.google.android.gms:play-services-auth:+
-  name: play-services-auth
-  copyrightHolder: Google, Inc.
-  license: Android Software Development Kit License
-  licenseUrl: https://developer.android.com/studio/terms.html
-  url: https://developers.google.com/android/guides/overview
-- artifact: com.google.android.gms:play-services-fido:+
-  name: play-services-fido
-  copyrightHolder: Google, Inc.
-  license: Android Software Development Kit License
-  licenseUrl: https://developer.android.com/studio/terms.html
-  url: https://developers.google.com/identity/fido
-- artifact: com.google.android.libraries.identity.googleid:googleid:+
-  name: googleid
-  copyrightHolder: Google, Inc.
-  license: Android Software Development Kit License
-  licenseUrl: https://developer.android.com/studio/terms.html
-  url: https://developers.google.com/identity
+  licenseUrl: https://opensource.org/licenses/MIT
+  url: http://www.slf4j.org
 - artifact: androidx.annotation:annotation-experimental:+
   name: annotation-experimental
   copyrightHolder: Google, Inc.
@@ -912,6 +864,36 @@
   license: MIT License
   licenseUrl: https://opensource.org/licenses/mit-license
   url: https://github.com/benasher44/uuid/
+- artifact: com.google.android.gms:play-services-auth-api-phone:+
+  name: play-services-auth-api-phone
+  copyrightHolder: Google, Inc.
+  license: Android Software Development Kit License
+  licenseUrl: https://developer.android.com/studio/terms.html
+  url: https://developers.google.com/android/guides/overview
+- artifact: com.google.android.gms:play-services-auth-base:+
+  name: play-services-auth-base
+  copyrightHolder: Google, Inc.
+  license: Android Software Development Kit License
+  licenseUrl: https://developer.android.com/studio/terms.html
+  url: https://developers.google.com/android/guides/overview
+- artifact: com.google.android.gms:play-services-auth:+
+  name: play-services-auth
+  copyrightHolder: Google, Inc.
+  license: Android Software Development Kit License
+  licenseUrl: https://developer.android.com/studio/terms.html
+  url: https://developers.google.com/android/guides/overview
+- artifact: com.google.android.gms:play-services-fido:+
+  name: play-services-fido
+  copyrightHolder: Google, Inc.
+  license: Android Software Development Kit License
+  licenseUrl: https://developer.android.com/studio/terms.html
+  url: https://developers.google.com/identity/fido
+- artifact: com.google.android.libraries.identity.googleid:googleid:+
+  name: googleid
+  copyrightHolder: Google, Inc.
+  license: Android Software Development Kit License
+  licenseUrl: https://developer.android.com/studio/terms.html
+  url: https://developers.google.com/identity
 - artifact: com.google.android.material:material:+
   name: material
   copyrightHolder: Google, Inc.
@@ -954,9 +936,3 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: https://www.apache.org/licenses/LICENSE-2.0.txt
   url: https://github.com/Kotlin/kotlinx.atomicfu
-- artifact: org.slf4j:slf4j-api:+
-  name: slf4j-api
-  copyrightHolder: QOS.ch
-  license: MIT License
-  licenseUrl: https://opensource.org/licenses/MIT
-  url: http://www.slf4j.org

@@ -26,7 +26,7 @@ buildscript {
 
 plugins {
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
-    id "com.apollographql.apollo" version "4.3.2"
+    id "com.apollographql.apollo" version "4.3.3"
 }
 
 ext {
@@ -44,6 +44,18 @@ else {
     ext["internalReleaseRepoUrl"] = ""
     ext["internalReleaseRepoName"] = ""
     ext["sonatypeStagingProfileId"] = ""
+}
+
+if (project.hasProperty("ossIndexUsername")) {
+    ext["ossIndexUsername"] = "$ossIndexUsername"
+} else {
+    ext["ossIndexUsername"] = ""
+}
+
+if (project.hasProperty("ossIndexPassword")) {
+    ext["ossIndexPassword"] = "$ossIndexPassword"
+} else {
+    ext["ossIndexPassword"] = ""
 }
 
 if (project.findProperty("tag") && sonatypeStagingProfileId) {
